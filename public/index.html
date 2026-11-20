@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patagón Sensor — Panel</title>
+<meta name="description" content="Monitoreo inteligente de cultivos hidropónicos para INDAP Magallanes: sensores, alertas y mapa del invernadero.">
+<meta name="theme-color" content="#4C9960">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside>
+  <div class="brand"><span class="sq"></span>Patagón Sensor</div>
+  <nav>
+    <button class="on" data-v="resumen">Resumen</button>
+    <button data-v="sensores">Sensores</button>
+    <button data-v="mapa">Mapa</button>
+    <button data-v="historial">Historial</button>
+    <button data-v="alertas">Alertas <span class="badge" id="bd" data-n="0"></span></button>
+    <button data-v="pronostico">Pronóstico</button>
+    <button data-v="cultivo">Cultivo</button>
+    <button data-v="ajustes">Ajustes</button>
+  </nav>
+  <div class="foot">Invernadero Norte<br>Punta Arenas, Magallanes</div>
+</aside>
+<main>
+  <div class="banner">
+    <small>Invernadero Norte · Punta Arenas</small>
+    <h1 id="ttl">Resumen</h1>
+    <div class="live" id="live">EN VIVO</div>
+    <div class="tools">
+      <button class="btn dng" id="frost">Simular helada</button>
+      <button class="btn" id="theme" aria-label="Cambiar tema">Tema</button>
+    </div>
+  </div>
+  <div class="content">
+    <section class="view on" id="v-resumen">
+      <h2 class="t">Panel en tiempo real</h2><div class="rule"></div>
+      <div class="sem"><div class="dot" id="sd"></div><div><b id="sb"></b><span id="ss"></span></div></div>
+      <div class="metrics" id="mt"></div>
+      <div class="row">
+        <div class="panel"><h3 id="ct"></h3><svg class="ch" id="chart" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="lg"><span>hace 24 lecturas</span><span>ahora</span></div></div>
+        <div class="panel"><h3>Alertas pendientes</h3><div id="ra"></div></div>
+      </div>
+    </section>
+    <section class="view" id="v-sensores">
+      <h2 class="t">Sensores instalados</h2><div class="rule"></div>
+      <div class="ts"><table><thead><tr><th>Sensor</th><th>Mide</th><th>Ubicación</th><th>Última lectura</th><th>Estado</th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="panel" style="margin-top:16px"><h3>Ingreso manual (para quien no tiene sensor)</h3>
+        <div class="form">
+          <label>Variable<select id="msel"></select></label>
+          <label>Valor<input id="mval" type="number" step="0.1" inputmode="decimal"></label>
+          <button class="btn pri" id="madd">Registrar</button>
+        </div></div>
+    </section>
+    <section class="view" id="v-mapa">
+      <h2 class="t">Mapa del invernadero</h2><div class="rule"></div>
+      <p style="color:var(--muted);margin-top:0">Plano en vivo: cada punto es un sensor y cambia de color según su estado. Toca uno para ver el detalle.</p>
+      <div class="row mp">
+        <div class="panel"><svg id="map" viewBox="0 0 640 360" role="img" aria-label="Plano del invernadero con ubicación de sensores"></svg>
+          <div class="leg"><span><i class="g"></i>Normal</span><span><i class="y"></i>Aviso</span><span><i class="r"></i>Alerta</span><span><i class="o"></i>Sin señal</span></div></div>
+        <div class="panel" id="md"></div>
+      </div>
+    </section>
+    <section class="view" id="v-historial">
+      <h2 class="t">Historial por día</h2><div class="rule"></div>
+      <div class="form" style="margin-bottom:12px"><label>Variable<select id="hs"></select></label><label>Período<select id="hd"><option value="7">7 días</option><option value="14" selected>14 días</option><option value="30">30 días</option></select></label></div>
+      <div class="panel"><h3 id="ht"></h3><svg class="ch" id="hbars" viewBox="0 0 600 190" preserveAspectRatio="none"></svg><div class="lg"><span id="h0"></span><span id="h1"></span></div></div>
+      <div class="ts"><table><thead><tr><th>Día</th><th>Promedio</th><th>Mín.</th><th>Máx.</th><th>Lecturas</th><th>Alertas</th></tr></thead><tbody id="htb"></tbody></table></div>
+    </section>
+    <section class="view" id="v-alertas">
+      <h2 class="t">Historial de alertas</h2><div class="rule"></div>
+      <div class="chips"><button class="btn on" data-f="all">Todas</button><button class="btn" data-f="pend">Pendientes</button></div>
+      <div class="panel" id="la"></div>
+    </section>
+    <section class="view" id="v-pronostico">
+      <h2 class="t">Pronóstico y recomendaciones</h2><div class="rule"></div>
+      <p style="color:var(--muted);margin-top:0">Consejos preventivos según el tiempo de los próximos días.</p>
+      <div class="fc" id="fc"></div>
+    </section>
+    <section class="view" id="v-cultivo">
+      <h2 class="t">Cultivos</h2><div class="rule"></div>
+      <div class="row">
+        <div class="panel"><h3>Ficha de planta</h3><div class="form"><label>Cultivo<select id="cs"></select></label></div><div id="ficha" style="margin-top:10px"></div>
+          <div class="form" style="margin-top:12px"><label>Altura (cm)<input id="hh" type="number" step="0.1" inputmode="decimal"></label><label>Ancho (cm)<input id="hw" type="number" step="0.1" inputmode="decimal"></label><button class="btn pri" id="hadd">Registrar medida</button><button class="btn" id="carc">Archivar</button></div></div>
+        <div class="panel"><h3>Rendimiento por temporada (kg/m²)</h3><svg id="bars" class="ch" viewBox="0 0 300 160" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="form"><label>Temporada<input id="ys" placeholder="2026-27" size="8"></label><label>kg/m²<input id="yk" type="number" step="0.1"></label><button class="btn" id="yadd">Guardar</button></div></div>
+      </div>
+      <div class="panel"><h3>Nuevo cultivo</h3><div class="form">
+        <label>Nombre<input id="nn" placeholder="Lechuga bandeja 2"></label>
+        <label>Tipo<select id="ntp"><option value="frutilla">Frutilla</option><option value="lechuga">Lechuga</option><option value="albahaca">Albahaca</option><option value="tomate">Tomate</option><option value="espinaca">Espinaca</option><option value="otro">Otro</option></select></label>
+        <label>Sistema<select id="nsy"><option>NFT</option><option>DWC</option><option>Sustrato</option><option>Suelo</option></select></label>
+        <label>Zona<select id="nzo"><option>Invernadero Norte</option><option>Invernadero Sur</option><option>Campo abierto</option></select></label>
+        <button class="btn pri" id="nadd">Crear cultivo</button></div></div>
+    </section>
+    <section class="view" id="v-ajustes">
+      <h2 class="t">Ajustes</h2><div class="rule"></div>
+      <div class="panel"><h3>Umbrales de alerta</h3><div class="form">
+        <label>Helada: temp. de suelo bajo (°C)<input id="t-temp" type="number" step="0.5"></label>
+        <label>Riego: humedad de suelo bajo (%)<input id="t-hum" type="number"></label>
+        <label>Viento sobre (km/h)<input id="t-vie" type="number"></label>
+        <label>Nivel de agua bajo (%)<input id="t-niv" type="number"></label>
+        <button class="btn pri" id="tsave">Guardar</button><button class="btn" id="treset">Restaurar</button></div></div>
+      <div class="panel"><h3>Datos</h3><div class="form"><label>Exportar últimos<select id="xd"><option value="7">7 días</option><option value="30">30 días</option><option value="90">90 días</option></select></label><button class="btn" id="csv">Exportar lecturas (CSV)</button><button class="btn" id="out">Cerrar sesión</button></div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:0">Todo se guarda en la base de datos del servidor. El CSV sirve de respaldo para postular a fondos.</p></div>
+    </section>
+  </div>
+  <div class="foot2"><i></i><i></i></div>
+</main>
+<div id="lg" hidden><form id="lgf" class="panel" style="width:min(340px,90vw)"><h3>Patagón Sensor</h3><label style="display:flex;flex-direction:column;gap:6px;font-size:13px">Clave de acceso<input id="lp" type="password" autocomplete="current-password" style="font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)"></label><div id="lerr" style="color:var(--r);font-size:13px;min-height:20px"></div><button class="btn pri" style="width:100%">Entrar</button></form></div>
+<div id="toast" role="status"></div>
+<noscript>Esta aplicación necesita JavaScript.</noscript>
+<script src="app.js" defer></script>
+<script src="map.js" defer></script>
+</body>
+</html>

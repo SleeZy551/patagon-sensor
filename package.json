@@ -1,0 +1,9 @@
+{
+  "name": "patagon-sensor",
+  "version": "2.0.0",
+  "description": "Panel de monitoreo de cultivos hidropónicos con API y PostgreSQL (INDAP Magallanes)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "express": "^4.19.2", "pg": "^8.11.5" }
+}

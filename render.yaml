@@ -1,0 +1,21 @@
+# La base de datos ya existe en Render: copia su "Internal Database URL" en DATABASE_URL.
+services:
+  - type: web
+    name: patagon-sensor
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: DATABASE_URL
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: INGEST_KEY
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SIMULATE
+        value: "true"
