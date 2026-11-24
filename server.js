@@ -1,8 +1,6 @@
-const express = require('express'), crypto = require('crypto'), path = require('path');
+const express = require('express'), path = require('path');
 const { pool, init } = require('./db');
 
-const PASS = process.env.APP_PASSWORD || '', INGEST = process.env.INGEST_KEY || '';
-const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(24).toString('hex');
 const SIM = process.env.SIMULATE !== 'false', EVERY = +(process.env.SIM_EVERY || 60);
 const KEEP = +(process.env.RETAIN_DAYS || 60), TZ = process.env.APP_TZ || 'America/Punta_Arenas';
 
@@ -47,38 +45,23 @@ async function ingest(id, v, ts) {
     [st, id, st === 'r' ? s.msg : `Aviso: ${s.n} cerca del umbral (${(+v).toFixed(1)} ${s.u})`]);
 }
 
-// ---- Autenticación sencilla (clave única + cookie firmada) ----
-const sign = e => e + '.' + crypto.createHmac('sha256', SECRET).update(String(e)).digest('hex');
-function authed(q) {
-  if (!PASS) return true;
-  const m = (q.headers.cookie || '').match(/(?:^|; )ps=([^;]+)/);
-  if (!m) return false;
-  const e = m[1].split('.')[0], a = Buffer.from(m[1]), b = Buffer.from(sign(e));
-  return +e > Date.now() && a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-const guard = (q, r, n) => (authed(q) ? n() : r.status(401).json({ error: 'auth' }));
-const guardKey = (q, r, n) => (INGEST && q.headers['x-api-key'] === INGEST) || authed(q) ? n() : r.status(401).json({ error: 'auth' });
+// ---- Acceso público (sin login). Se limita la cantidad de escrituras por IP ----
+const guard = (q, r, n) => n(), guardKey = guard;
 const w = f => (q, r) => f(q, r).catch(e => { console.error(e); r.status(500).json({ error: 'server' }); });
 
 const app = express();
 app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use((q, r, n) => { r.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin' }); n(); });
-
-app.get('/api/health', (q, r) => r.json({ ok: true }));
-app.get('/api/me', (q, r) => r.json({ need: !!PASS, auth: authed(q) }));
-const tries = {};
-app.post('/api/login', (q, r) => {
-  if (!PASS) return r.json({ ok: true });
-  const t = tries[q.ip] || (tries[q.ip] = { n: 0, u: 0 });
-  if (Date.now() > t.u) { t.n = 0; t.u = Date.now() + 9e5; }
-  if (++t.n > 10) return r.status(429).json({ error: 'Demasiados intentos' });
-  const a = Buffer.from(String((q.body || {}).password || '')), b = Buffer.from(PASS);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return r.status(401).json({ error: 'Clave incorrecta' });
-  r.cookie('ps', sign(Date.now() + 30 * 864e5), { httpOnly: true, sameSite: 'lax', secure: q.secure, maxAge: 30 * 864e5 });
-  r.json({ ok: true });
+const hits = {};
+setInterval(() => { for (const k in hits) delete hits[k]; }, 6e5);
+app.use('/api', (q, r, n) => {
+  if (q.method === 'GET') return n();
+  const t = Date.now(), h = (hits[q.ip] = (hits[q.ip] || []).filter(x => t - x < 6e4));
+  if (h.length >= 60) return r.status(429).json({ error: 'Demasiadas acciones, espera un momento' });
+  h.push(t); n();
 });
-app.post('/api/logout', (q, r) => { r.clearCookie('ps'); r.json({ ok: true }); });
+app.get('/api/health', (q, r) => r.json({ ok: true }));
 
 // Recibir lecturas (desde el panel o desde los sensores con cabecera x-api-key)
 app.post('/api/readings', guardKey, w(async (q, r) => {

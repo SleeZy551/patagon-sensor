@@ -11,11 +11,5 @@ services:
         value: "20"
       - key: DATABASE_URL
         sync: false
-      - key: APP_PASSWORD
-        sync: false
-      - key: INGEST_KEY
-        generateValue: true
-      - key: SESSION_SECRET
-        generateValue: true
       - key: SIMULATE
         value: "true"
